@@ -144,15 +144,6 @@ STDMETHODIMP CHapEncoder::NonDelegatingQueryInterface(REFIID riid, void **ppv) {
 }
 
 //######################################
-//
-//######################################
-//void HapMTDecode(HapDecodeWorkFunction function, void *info, unsigned int count, void *) {
-//	concurrency::parallel_for((unsigned int)0, count, [&](unsigned int i) {
-//		function(info, i);
-//	});
-//}
-
-//######################################
 // Transform
 //######################################
 HRESULT CHapEncoder::Transform (IMediaSample *pMediaSampleIn, IMediaSample *pMediaSampleOut) {
@@ -206,7 +197,6 @@ HRESULT CHapEncoder::Compress (PBYTE pSrcBuffer, PBYTE pDestBuffer, DWORD dwSize
 	if (m_subTypeOut == MEDIASUBTYPE_Hap1) {
 
 		if (m_useOMP) {
-			//#ifdef USE_OPENMP_DXT
 			int numThreads = omp_get_max_threads();
 #pragma omp parallel num_threads(numThreads)
 			{
@@ -224,17 +214,14 @@ HRESULT CHapEncoder::Compress (PBYTE pSrcBuffer, PBYTE pDestBuffer, DWORD dwSize
 					squish::CompressImage(pSrcBuffer + offset1, _width, chunkHeight, (unsigned char*)_dxtBuffer + offset2, _dxtFlags, NULL);
 				}
 			}
-			//#else
 		}
 		else {
 			squish::CompressImage(pSrcBuffer, _width, _height, _dxtBuffer, _dxtFlags, NULL);
-//#endif
 		}
 
 	}
 
 	else if (m_subTypeOut == MEDIASUBTYPE_Hap5) {
-//#ifdef USE_OPENMP_DXT
 		if (m_useOMP) {
 			int numThreads = omp_get_max_threads();
 #pragma omp parallel num_threads(numThreads)
@@ -252,11 +239,9 @@ HRESULT CHapEncoder::Compress (PBYTE pSrcBuffer, PBYTE pDestBuffer, DWORD dwSize
 					squish::CompressImage(pSrcBuffer + offset1, _width, chunkHeight, (unsigned char*)_dxtBuffer + offset2, _dxtFlags, NULL);
 				}
 			}
-			//#else
 		}
 		else {
 			squish::CompressImage(pSrcBuffer, _width, _height, _dxtBuffer, _dxtFlags, NULL);
-			//#endif
 		}
 	} 
 	
@@ -447,7 +432,7 @@ HRESULT CHapEncoder::GetMediaType (int iPosition, CMediaType *pMediaType) {
 	HRESULT hr = m_pInput->ConnectionMediaType(pMediaType);
 	if (FAILED(hr))	return hr;
 
-	//ASSERT(pMediaType->formattype == FORMAT_VideoInfo);
+	if (pMediaType->formattype != FORMAT_VideoInfo) return E_UNEXPECTED;
 
 	VIDEOINFOHEADER *pVih = reinterpret_cast<VIDEOINFOHEADER*>(pMediaType->pbFormat);
 
@@ -463,11 +448,8 @@ HRESULT CHapEncoder::GetMediaType (int iPosition, CMediaType *pMediaType) {
 			pMediaType->subtype = MEDIASUBTYPE_Hap1;
 			pVih->bmiHeader.biCompression = FOURCC_Hap1;
 
-			pMediaType->SetSampleSize(pVih->bmiHeader.biWidth * pVih->bmiHeader.biHeight); // ???
-
-			//dwBitRate: Approximate data rate of the video stream, in bits per second.
-			//pVih->dwBitRate = (DWORD)floor(10000000.0 / pVih->AvgTimePerFrame * pVih->bmiHeader.biWidth * pVih->bmiHeader.biHeight * 8.0 + 0.5);
-			pVih->bmiHeader.biSizeImage = pVih->bmiHeader.biWidth * pVih->bmiHeader.biHeight   * 3;
+			pMediaType->SetSampleSize(pVih->bmiHeader.biWidth * pVih->bmiHeader.biHeight);
+			pVih->bmiHeader.biSizeImage = pVih->bmiHeader.biWidth * pVih->bmiHeader.biHeight * 3;
 			pVih->bmiHeader.biBitCount = 24;
 			break;
 
@@ -476,8 +458,6 @@ HRESULT CHapEncoder::GetMediaType (int iPosition, CMediaType *pMediaType) {
 			pVih->bmiHeader.biCompression = FOURCC_Hap5;
 
 			pMediaType->SetSampleSize(pVih->bmiHeader.biWidth * pVih->bmiHeader.biHeight * 2);
-
-			//pVih->dwBitRate = (DWORD)floor(10000000.0 / pVih->AvgTimePerFrame * pVih->bmiHeader.biWidth * pVih->bmiHeader.biHeight * 16.0 + 0.5);
 			pVih->bmiHeader.biSizeImage = pVih->bmiHeader.biWidth * pVih->bmiHeader.biHeight * 2;
 			pVih->bmiHeader.biBitCount = 32;
 			break;
@@ -487,12 +467,9 @@ HRESULT CHapEncoder::GetMediaType (int iPosition, CMediaType *pMediaType) {
 			pVih->bmiHeader.biCompression = FOURCC_HapY;
 
 			pMediaType->SetSampleSize(pVih->bmiHeader.biWidth * pVih->bmiHeader.biHeight * 2);
-
-			//pVih->dwBitRate = (DWORD)floor(10000000.0 / pVih->AvgTimePerFrame * pVih->bmiHeader.biWidth * pVih->bmiHeader.biHeight * 16.0 + 0.5);
 			pVih->bmiHeader.biSizeImage = pVih->bmiHeader.biWidth * pVih->bmiHeader.biHeight * 2;
 			pVih->bmiHeader.biBitCount = 24;
 			break;
-
 	}
 
 	return S_OK;
@@ -531,11 +508,7 @@ HRESULT CHapEncoder::CheckTransform (const CMediaType *pMediaTypeIn, const CMedi
 	// Check the output subtype - it must be a Hap format
 	//######################################
 	GUID subTypeOut = pMediaTypeOut->subtype;
-	if (subTypeOut == g_usedHapType
-		//subTypeOut == MEDIASUBTYPE_Hap1 || 
-		//subTypeOut == MEDIASUBTYPE_Hap5 || 
-		//subTypeOut == MEDIASUBTYPE_HapY
-	) {
+	if (subTypeOut == g_usedHapType) {
 		m_subTypeIn = subTypeIn;
 		m_subTypeOut = subTypeOut;
 		return S_OK;
