@@ -65,8 +65,6 @@ private:
 // y must be 2^n
 #define align_round(x,y) ((((unsigned int)(x))+(y-1))&(~(y-1)))
 
-#define LAGARITH_RELEASE		// if this is a version to release, disables all debugging info 
-
 inline void * lag_aligned_malloc(void *ptr, int size, int align, char *str) {
 	if (ptr) {
 		try {
