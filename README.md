@@ -16,5 +16,4 @@ The filter is a standard DirectShow video filter, and when globally registered, 
 *Screenshots*
 
 HapEncoder in GraphStudio, transcoding "bbb_360p_10sec.mp4" to Hap Q (with Snappy compression and 4 chunks):
-(Hap Q) and passing the raw compressed textures (DXTY) to OpenGL (using HapRenderer):
 ![](screenshots/HapEncoder_GraphStudio_HapQ.png)
