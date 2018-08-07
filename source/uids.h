@@ -1,0 +1,45 @@
+#pragma once
+
+// {8A2D8B52-1689-4FA5-9498-335109624DE7}
+DEFINE_GUID(CLSID_HapEncoder,
+	0x8a2d8b52, 0x1689, 0x4fa5, 0x94, 0x98, 0x33, 0x51, 0x9, 0x62, 0x4d, 0xe7);
+
+// {1ACB687A-E9E8-43A7-8AAF-C05A59CF4DBA}
+DEFINE_GUID(CLSID_HapEncoderPropertyPage,
+	0x1acb687a, 0xe9e8, 0x43a7, 0x8a, 0xaf, 0xc0, 0x5a, 0x59, 0xcf, 0x4d, 0xba);
+
+//######################################
+// HAP TYPES
+//######################################
+
+//{31706148 - 0000 - 0010 - 8000 - 00AA00389B71} = Hap1
+#define FOURCC_Hap1 (MAKEFOURCC('H','a','p','1'))
+DEFINE_GUID(MEDIASUBTYPE_Hap1,
+	FOURCC_Hap1, 0x0000, 0x0010, 0x80, 0x00, 0x00, 0xAA, 0x00, 0x38, 0x9B, 0x71);
+
+//{35706148-0000-0010-8000-00AA00389B71} = Hap5 = Hap Alpha
+#define FOURCC_Hap5 (MAKEFOURCC('H','a','p','5'))
+DEFINE_GUID(MEDIASUBTYPE_Hap5,
+	FOURCC_Hap5, 0x0000, 0x0010, 0x80, 0x00, 0x00, 0xAA, 0x00, 0x38, 0x9B, 0x71);
+
+//{35706148-0000-0010-8000-00AA00389B71} = HapY = Hap Q
+#define FOURCC_HapY (MAKEFOURCC('H','a','p','Y'))
+DEFINE_GUID(MEDIASUBTYPE_HapY,
+	FOURCC_HapY, 0x0000, 0x0010, 0x80, 0x00, 0x00, 0xAA, 0x00, 0x38, 0x9B, 0x71);
+
+//######################################
+// DXT TYPES
+//######################################
+
+//{31545844-0000-0010-8000-00AA00389B71} // Hap
+DEFINE_GUID(MEDIASUBTYPE_DXT1,
+	FOURCC_DXT1, 0x0000, 0x0010, 0x80, 0x00, 0x00, 0xAA, 0x00, 0x38, 0x9B, 0x71);
+
+//{35545844-0000-0010-8000-00AA00389B71} // Hap Alpha
+DEFINE_GUID(MEDIASUBTYPE_DXT5,
+	FOURCC_DXT5, 0x0000, 0x0010, 0x80, 0x00, 0x00, 0xAA, 0x00, 0x38, 0x9B, 0x71);
+
+//{59545844-0000-0010-8000-00AA00389B71} // Hap Q
+#define FOURCC_DXTY (MAKEFOURCC('D','X','T','Y'))
+DEFINE_GUID(MEDIASUBTYPE_DXTY,
+	FOURCC_DXTY, 0x0000, 0x0010, 0x80, 0x00, 0x00, 0xAA, 0x00, 0x38, 0x9B, 0x71);
