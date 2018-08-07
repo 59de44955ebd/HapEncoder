@@ -4,28 +4,28 @@
 
 class CHapEncoder : 
 	public CTransformFilter,
-    public ISpecifyPropertyPages,
-    public CPersistStream
+	public ISpecifyPropertyPages,
+	public CPersistStream
 {
 
 public:
 
-    DECLARE_IUNKNOWN;
-    static CUnknown * WINAPI CreateInstance (LPUNKNOWN punk, HRESULT *phr);
+	DECLARE_IUNKNOWN;
+	static CUnknown * WINAPI CreateInstance (LPUNKNOWN punk, HRESULT *phr);
 
 	// Implement the ISpecifyPropertyPages interface
-    STDMETHODIMP NonDelegatingQueryInterface (REFIID riid, void ** ppv);
+	STDMETHODIMP NonDelegatingQueryInterface (REFIID riid, void ** ppv);
 	STDMETHODIMP GetPages(CAUUID *pPages);
 
-    // Overrriden from CTransformFilter base class
-    HRESULT Transform (IMediaSample *pIn, IMediaSample *pOut);
-    HRESULT CheckInputType (const CMediaType *mtIn);
-    HRESULT CheckTransform (const CMediaType *mtIn, const CMediaType *mtOut);
-    HRESULT DecideBufferSize (IMemAllocator *pAlloc, ALLOCATOR_PROPERTIES *pProperties);
-    HRESULT GetMediaType (int iPosition, CMediaType *pMediaType);
+	// Overrriden from CTransformFilter base class
+	HRESULT Transform (IMediaSample *pIn, IMediaSample *pOut);
+	HRESULT CheckInputType (const CMediaType *mtIn);
+	HRESULT CheckTransform (const CMediaType *mtIn, const CMediaType *mtOut);
+	HRESULT DecideBufferSize (IMemAllocator *pAlloc, ALLOCATOR_PROPERTIES *pProperties);
+	HRESULT GetMediaType (int iPosition, CMediaType *pMediaType);
 
-    // CPersistStream override
-    STDMETHODIMP GetClassID (CLSID *pClsid);
+	// CPersistStream override
+	STDMETHODIMP GetClassID (CLSID *pClsid);
 
 
 	//unsigned long CompressHap(const unsigned char* inputBuffer, void* outputBuffer, unsigned long outputBufferBytes, unsigned int compressorOptions);
@@ -35,23 +35,22 @@ public:
 
 private:
 
-    // Constructor
-    CHapEncoder (TCHAR *tszName, LPUNKNOWN punk, HRESULT *phr);
+	CHapEncoder (TCHAR *tszName, LPUNKNOWN punk, HRESULT *phr);
 	~CHapEncoder();
 
-    HRESULT Copy (IMediaSample *pSource, IMediaSample *pDest) const;
+	HRESULT Copy (IMediaSample *pSource, IMediaSample *pDest) const;
 
 	size_t m_outputBufferSize = 0;
 
 	// DXT DECOMPRESSION
-	int _dxtFlags = 0;
-	PBYTE _dxtBuffer = NULL;
-	unsigned int _dxtBufferSize = 0;
+	int m_dxtFlags = 0;
+	PBYTE m_dxtBuffer = NULL;
+	unsigned int m_dxtBufferSize = 0;
 
-	PBYTE _tmpBuffer = NULL;
+	PBYTE m_tmpBuffer = NULL;
 
-	unsigned int _width;
-	unsigned int _height;
+	unsigned int m_width;
+	unsigned int m_height;
 
 	GUID m_subTypeIn;
 	GUID m_subTypeOut;

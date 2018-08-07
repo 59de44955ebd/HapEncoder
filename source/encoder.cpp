@@ -66,7 +66,7 @@ const AMOVIESETUP_PIN sudpPins[] = {
 
 const AMOVIESETUP_FILTER sudHapEncoder = {
 	&CLSID_HapEncoder,      // Filter CLSID
-	L"HapEncoder",          // String name 
+	L"HapEncoder",          // String name
 	MERIT_NORMAL,           // Filter merit - MERIT_DO_NOT_USE ?
 	2,                      // Number of pins
 	sudpPins                // Pin information
@@ -127,8 +127,8 @@ CHapEncoder::~CHapEncoder() {
 	// There are obviously better solutions - TODO
 	Sleep(200);
 
-	LAG_ALIGNED_FREE(_dxtBuffer, "dxtBuffer");
-	LAG_ALIGNED_FREE(_tmpBuffer, "tmpBuffer");
+	LAG_ALIGNED_FREE(m_dxtBuffer, "dxtBuffer");
+	LAG_ALIGNED_FREE(m_tmpBuffer, "tmpBuffer");
 }
 
 //######################################
@@ -172,9 +172,9 @@ HRESULT CHapEncoder::Transform (IMediaSample *pMediaSampleIn, IMediaSample *pMed
 	// Compress RGB32 to texture
 	//######################################
 	hr = Compress(
-		pSrcBuffer, 
-		pDestBuffer, 
-		pMediaSampleIn->GetActualDataLength(), 
+		pSrcBuffer,
+		pDestBuffer,
+		pMediaSampleIn->GetActualDataLength(),
 		&outputBufferEncodedSize);
 
 	if (FAILED(hr)) return hr;
@@ -189,10 +189,10 @@ HRESULT CHapEncoder::Transform (IMediaSample *pMediaSampleIn, IMediaSample *pMed
 //######################################
 HRESULT CHapEncoder::Compress (PBYTE pSrcBuffer, PBYTE pDestBuffer, DWORD dwSizeX, DWORD * outputBufferEncodedSize) {
 
-	ConvertBGRAtoRGBA(_width, _height, pSrcBuffer, _tmpBuffer, m_useOMP);
-	pSrcBuffer = _tmpBuffer;
+	ConvertBGRAtoRGBA(m_width, m_height, pSrcBuffer, m_tmpBuffer, m_useOMP);
+	pSrcBuffer = m_tmpBuffer;
 
-	FlipVerticallyInPlace(pSrcBuffer, _width * 4, _height, m_useOMP);
+	FlipVerticallyInPlace(pSrcBuffer, m_width * 4, m_height, m_useOMP);
 
 	if (m_subTypeOut == MEDIASUBTYPE_Hap1) {
 
@@ -201,22 +201,22 @@ HRESULT CHapEncoder::Compress (PBYTE pSrcBuffer, PBYTE pDestBuffer, DWORD dwSize
 #pragma omp parallel num_threads(numThreads)
 			{
 
-				int chunkHeight = _height / numThreads;
-				int threadChunkBytes = _width * chunkHeight * 4;
+				int chunkHeight = m_height / numThreads;
+				int threadChunkBytes = m_width * chunkHeight * 4;
 				int threadDxtChunkBytes = threadChunkBytes / 8;
 				int id = omp_get_thread_num();
 				int offset1 = id * threadChunkBytes;
 				int offset2 = id * threadDxtChunkBytes;
 
-#pragma omp for 
+#pragma omp for
 				for (int i = 0; i < numThreads; i++)
 				{
-					squish::CompressImage(pSrcBuffer + offset1, _width, chunkHeight, (unsigned char*)_dxtBuffer + offset2, _dxtFlags, NULL);
+					squish::CompressImage(pSrcBuffer + offset1, m_width, chunkHeight, (unsigned char*)m_dxtBuffer + offset2, m_dxtFlags, NULL);
 				}
 			}
 		}
 		else {
-			squish::CompressImage(pSrcBuffer, _width, _height, _dxtBuffer, _dxtFlags, NULL);
+			squish::CompressImage(pSrcBuffer, m_width, m_height, m_dxtBuffer, m_dxtFlags, NULL);
 		}
 
 	}
@@ -226,52 +226,52 @@ HRESULT CHapEncoder::Compress (PBYTE pSrcBuffer, PBYTE pDestBuffer, DWORD dwSize
 			int numThreads = omp_get_max_threads();
 #pragma omp parallel num_threads(numThreads)
 			{
-				int chunkHeight = _height / numThreads;
-				int threadChunkBytes = _width * chunkHeight * 4;
+				int chunkHeight = m_height / numThreads;
+				int threadChunkBytes = m_width * chunkHeight * 4;
 				int threadDxtChunkBytes = threadChunkBytes / 4;
 				int id = omp_get_thread_num();
 				DBGI(id);
 				int offset1 = id * threadChunkBytes;
 				int offset2 = id * threadDxtChunkBytes;
-#pragma omp for 
+#pragma omp for
 				for (int i = 0; i < numThreads; i++)
 				{
-					squish::CompressImage(pSrcBuffer + offset1, _width, chunkHeight, (unsigned char*)_dxtBuffer + offset2, _dxtFlags, NULL);
+					squish::CompressImage(pSrcBuffer + offset1, m_width, chunkHeight, (unsigned char*)m_dxtBuffer + offset2, m_dxtFlags, NULL);
 				}
 			}
 		}
 		else {
-			squish::CompressImage(pSrcBuffer, _width, _height, _dxtBuffer, _dxtFlags, NULL);
+			squish::CompressImage(pSrcBuffer, m_width, m_height, m_dxtBuffer, m_dxtFlags, NULL);
 		}
-	} 
-	
+	}
+
 	else if (m_subTypeOut == MEDIASUBTYPE_HapY) {
 
 		// Convert to YCoCg
 		ConvertRGBAToCoCgAY8888(
 			(unsigned char*)pSrcBuffer,
-			(unsigned char*)_tmpBuffer,
-			(unsigned long)_width,
-			(unsigned long)_height,
-			(size_t)_width * 4,
-			(size_t)_width * 4, 
+			(unsigned char*)m_tmpBuffer,
+			(unsigned long)m_width,
+			(unsigned long)m_height,
+			(size_t)m_width * 4,
+			(size_t)m_width * 4,
 			m_useOMP);
 
 		// Convert to DXT format
 		int outputSize = CompressYCoCgDXT5(
-			(const unsigned char*)_tmpBuffer,
-			(unsigned char*)_dxtBuffer,
-			_width,
-			_height,
-			_width * 4);
+			(const unsigned char*)m_tmpBuffer,
+			(unsigned char*)m_dxtBuffer,
+			m_width,
+			m_height,
+			m_width * 4);
 
 		assert(outputSize <= _dxtBufferSize);
-	} 
-	
+	}
+
 	else return E_FAIL; // should never happen
 
 	unsigned long inputBuffersBytes[1];
-	inputBuffersBytes[0] = _dxtBufferSize;
+	inputBuffersBytes[0] = m_dxtBufferSize;
 
 	unsigned int textureFormats[1];
 
@@ -292,7 +292,7 @@ HRESULT CHapEncoder::Compress (PBYTE pSrcBuffer, PBYTE pDestBuffer, DWORD dwSize
 
 	unsigned int res = HapEncode(
 		1,
-		(const void **)&_dxtBuffer,
+		(const void **)&m_dxtBuffer,
 
 		inputBuffersBytes,
 		textureFormats,
@@ -318,8 +318,8 @@ HRESULT CHapEncoder::Compress (PBYTE pSrcBuffer, PBYTE pDestBuffer, DWORD dwSize
 //######################################
 HRESULT CHapEncoder::Copy (IMediaSample *pSource, IMediaSample *pDest) const {
 
-	CheckPointer(pSource, E_POINTER);   
-	CheckPointer(pDest ,E_POINTER);   
+	CheckPointer(pSource, E_POINTER);
+	CheckPointer(pDest ,E_POINTER);
 
 	// Copy the sample times
 	REFERENCE_TIME TimeStart, TimeEnd;
@@ -501,8 +501,8 @@ HRESULT CHapEncoder::CheckTransform (const CMediaType *pMediaTypeIn, const CMedi
 	}
 
 	VIDEOINFOHEADER *pVih = reinterpret_cast<VIDEOINFOHEADER*>(pMediaTypeIn->pbFormat);
-	_width = pVih->bmiHeader.biWidth;
-	_height = pVih->bmiHeader.biHeight;
+	m_width = pVih->bmiHeader.biWidth;
+	m_height = pVih->bmiHeader.biHeight;
 
 	//######################################
 	// Check the output subtype - it must be a Hap format
@@ -526,22 +526,22 @@ HRESULT CHapEncoder::DecideBufferSize (IMemAllocator *pAlloc, ALLOCATOR_PROPERTI
 
 	// Is the input pin connected
 	if (m_pInput->IsConnected() == FALSE) return E_UNEXPECTED;
- 
+
 	CheckPointer(pAlloc, E_POINTER);
 	CheckPointer(pProperties, E_POINTER);
 
 	// Calculate needed output buffer size
-	_dxtFlags = (m_subTypeOut == MEDIASUBTYPE_Hap1 ? squish::kDxt1 : squish::kDxt5);
-	_dxtBufferSize = squish::GetStorageRequirements(_width, _height, _dxtFlags);
+	m_dxtFlags = (m_subTypeOut == MEDIASUBTYPE_Hap1 ? squish::kDxt1 : squish::kDxt5);
+	m_dxtBufferSize = squish::GetStorageRequirements(m_width, m_height, m_dxtFlags);
 
-	_dxtBuffer = (unsigned char *)lag_aligned_malloc(_dxtBuffer, _dxtBufferSize, 16, "dxtBuffer");
-	if (!_dxtBuffer) return E_OUTOFMEMORY;
+	m_dxtBuffer = (unsigned char *)lag_aligned_malloc(m_dxtBuffer, m_dxtBufferSize, 16, "dxtBuffer");
+	if (!m_dxtBuffer) return E_OUTOFMEMORY;
 
-	m_outputBufferSize = align_round(_width, 16) * _height * 4 + 4096;
+	m_outputBufferSize = align_round(m_width, 16) * m_height * 4 + 4096;
 
-	_tmpBuffer = (unsigned char *)lag_aligned_malloc(_tmpBuffer, _width * _height * 4, 16, "tmpBuffer");
-	if (!_tmpBuffer) {
-		LAG_ALIGNED_FREE(_dxtBuffer, "dxtBuffer");
+	m_tmpBuffer = (unsigned char *)lag_aligned_malloc(m_tmpBuffer, m_width * m_height * 4, 16, "tmpBuffer");
+	if (!m_tmpBuffer) {
+		LAG_ALIGNED_FREE(m_dxtBuffer, "dxtBuffer");
 		return E_OUTOFMEMORY;
 	}
 
@@ -592,7 +592,7 @@ STDMETHODIMP CHapEncoder::GetPages(CAUUID *pPages) {
 }
 
 ////////////////////////////////////////////////////////////////////////
-// Exported entry points for registration and unregistration 
+// Exported entry points for registration and unregistration
 // (in this case they only call through to default implementations).
 ////////////////////////////////////////////////////////////////////////
 
