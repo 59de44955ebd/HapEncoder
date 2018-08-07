@@ -2,7 +2,7 @@
 A simple DirectShow video encoder filter that encodes [HAP video](http://hap.video/) (Hap1, Hap Alpha, Hap Q).
 
 For now it only supports RGB32 as input. It has a config dialog that allows to configure various settings:
-* The Hap flavor (Hap1, Hap Alpha, Hap Q)
+* The HAP flavor (Hap1, Hap Alpha, Hap Q)
 * Chunks (1-64, default=1)
 * Snappy compression (default=FALSE)
 * Multithreading support via OpenMP (default=TRUE)
