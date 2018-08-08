@@ -189,10 +189,14 @@ HRESULT CHapEncoder::Transform (IMediaSample *pMediaSampleIn, IMediaSample *pMed
 //######################################
 HRESULT CHapEncoder::Compress (PBYTE pSrcBuffer, PBYTE pDestBuffer, DWORD dwSizeX, DWORD * outputBufferEncodedSize) {
 
-	ConvertBGRAtoRGBA(m_width, m_height, pSrcBuffer, m_tmpBuffer, m_useOMP);
-	pSrcBuffer = m_tmpBuffer;
+	//ConvertBGRAtoRGBA(m_width, m_height, pSrcBuffer, m_tmpBuffer, m_useOMP);
+	//pSrcBuffer = m_tmpBuffer;
 
-	FlipVerticallyInPlace(pSrcBuffer, m_width * 4, m_height, m_useOMP);
+	//FlipVerticallyInPlace(pSrcBuffer, m_width * 4, m_height, m_useOMP);
+
+	// test: color conversion and flipping at one go
+	ConvertBGRAtoRGBA_flippedVertically(m_width, m_height, pSrcBuffer, m_tmpBuffer, m_useOMP);
+	pSrcBuffer = m_tmpBuffer;
 
 	if (m_subTypeOut == MEDIASUBTYPE_Hap1) {
 

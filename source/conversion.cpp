@@ -8,6 +8,8 @@ Valentin Schmidt 2018: implemented OpenMP support
 #include <windows.h>
 #include <stdint.h>
 
+#include "dbg.h"
+
 //######################################
 // OMP
 //######################################
@@ -149,58 +151,111 @@ void ImageMath_MatrixMultiply8888(const void *src,
 //######################################
 // 
 //######################################
-void ConvertBGRAtoRGBA (int width, int height, const unsigned char* a, unsigned char* b, bool bUseOMP) {
-	int numPixels = width * height;
+//void ConvertBGRAtoRGBA (int width, int height, const unsigned char* a, unsigned char* b, bool bUseOMP) {
+//	int numPixels = width * height;
+//	if (bUseOMP) {
+//		int numThreads = omp_get_max_threads();
+//		//######################################
+//		#pragma omp parallel num_threads(numThreads)
+//		//######################################
+//		{
+//			int thread_id = omp_get_thread_num();
+//			const unsigned char* aa = a + (numPixels * 4 / numThreads) * thread_id;
+//			unsigned char* bb = b + (numPixels * 4 / numThreads) * thread_id;
+//			//######################################
+//			#pragma omp for
+//			//######################################
+//			for (int i = 0; i < numPixels; i++) {
+//				bb[0] = aa[2];
+//				bb[1] = aa[1];
+//				bb[2] = aa[0];
+//				bb[3] = aa[3];
+//				aa += 4;
+//				bb += 4;
+//			}
+//		}
+//	}
+//	else {
+//		for (int i = 0; i < numPixels; i++)
+//		{
+//			b[0] = a[2];
+//			b[1] = a[1];
+//			b[2] = a[0];
+//			b[3] = a[3];
+//			a += 4;
+//			b += 4;
+//		}
+//	}
+//}
+
+//######################################
+// speed optimization: color conversion and flipping at one go
+//######################################
+
+void ConvertBGRAtoRGBA_flippedVertically (int width, int height, const unsigned char* a, unsigned char* b, bool bUseOMP) {
+
+	unsigned char * bb = b + (height - 1) * width * 4;
+
 	if (bUseOMP) {
+		int stride = width * 4;
+		const unsigned char* aa = a;
 		int numThreads = omp_get_max_threads();
-		//######################################
-		#pragma omp parallel num_threads(numThreads)
-		//######################################
-		{
-			int thread_id = omp_get_thread_num();
-			const unsigned char* aa = a + (numPixels * 4 / numThreads) * thread_id;
-			unsigned char* bb = b + (numPixels * 4 / numThreads) * thread_id;
-			//######################################
-			#pragma omp for
-			//######################################
-			for (int i = 0; i < numPixels; i++) {
+		unsigned char* b_start = b + (height - 1) * stride;
+		int dy;
+
+#pragma omp parallel num_threads(numThreads)
+#pragma omp for
+
+		for (int y = 0; y < height; y++) {
+			dy = y * stride;
+			bb = b_start - dy;
+			for (int x = 0; x < width; x++) {
+				aa = a + dy + x * 4;
 				bb[0] = aa[2];
 				bb[1] = aa[1];
 				bb[2] = aa[0];
 				bb[3] = aa[3];
-				aa += 4;
 				bb += 4;
 			}
 		}
 	}
+
 	else {
-		for (int i = 0; i < numPixels; i++)
-		{
-			b[0] = a[2];
-			b[1] = a[1];
-			b[2] = a[0];
-			b[3] = a[3];
-			a += 4;
-			b += 4;
+
+		int x, y;
+		int dstride = width * 8;
+
+		for (y = 0; y < height; y++) {
+			for (x = 0; x < width; x++) {
+				bb[0] = a[2];
+				bb[1] = a[1];
+				bb[2] = a[0];
+				bb[3] = a[3];
+				a += 4;
+				bb += 4;
+			}
+			bb -= dstride;
 		}
+
 	}
+
 }
 
 //######################################
 // TODO: use OpenMX ?
 //######################################
-void FlipVerticallyInPlace(unsigned char* buffer, int stride, int height, bool bUseOMP)
-{
-	unsigned char* row = new unsigned char[stride];
-	const unsigned char* inRow = buffer;
-	unsigned char* outRow = buffer + (stride * (height - 1));
-	for (int i = 0; i < height / 2; i++)
-	{
-		memcpy((void*)row, (const void*)inRow, stride);
-		memcpy((void*)inRow, (const void*)outRow, stride);
-		memcpy((void*)outRow, (const void*)row, stride);
-		inRow += stride;
-		outRow -= stride;
-	}
-	delete[] row;
-}
+//void FlipVerticallyInPlace(unsigned char* buffer, int stride, int height, bool bUseOMP)
+//{
+//	unsigned char* row = new unsigned char[stride];
+//	const unsigned char* inRow = buffer;
+//	unsigned char* outRow = buffer + (stride * (height - 1));
+//	for (int i = 0; i < height / 2; i++)
+//	{
+//		memcpy((void*)row, (const void*)inRow, stride);
+//		memcpy((void*)inRow, (const void*)outRow, stride);
+//		memcpy((void*)outRow, (const void*)row, stride);
+//		inRow += stride;
+//		outRow -= stride;
+//	}
+//	delete[] row;
+//}
